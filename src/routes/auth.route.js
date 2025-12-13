@@ -101,10 +101,68 @@ router.post("/verify-otp", async (req, res) => {
   }
 })
 
-router.get("/login", (req, res) => {
-    res.render("login");
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    const user = await User.findOne({ email: email });
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    if (user.password !== password) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // Store user in session
+    req.session.userId = user._id;
+
+    res.status(200).json({
+      message: "Login successful",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error("Error during login:", error);
+    res.status(500).json({ message: "Failed to login" });
+  }
 });
 
+router.get("/user", async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
 
+    const user = await User.findById(req.session.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        mobile: user.mobile,
+        address: user.address,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    res.status(500).json({ message: "Failed to fetch user details" });
+  }
+});
 
 module.exports = router;

@@ -12,7 +12,7 @@ const app = express();
 
 // CORS configuration - must be before other middleware
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000', // Change to your frontend URL
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Change to your frontend URL
   credentials: true, // Allow cookies/session to be sent
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
