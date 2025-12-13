@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const session = require('express-session');
 const authRoutes = require('./routes/auth.route');
 const connectDB = require('./db/db');
@@ -8,6 +9,16 @@ const connectDB = require('./db/db');
 connectDB();
 
 const app = express();
+
+// CORS configuration - must be before other middleware
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000', // Change to your frontend URL
+  credentials: true, // Allow cookies/session to be sent
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 
 // Middleware - order matters
 app.use(express.json());
@@ -21,7 +32,8 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production
     httpOnly: true, // Prevents client-side JavaScript from accessing the cookie
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' // Required for CORS with credentials
   }
 }));
 
