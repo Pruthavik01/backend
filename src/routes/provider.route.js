@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Menu = require('../Models/menu.model');
 const User = require('../Models/user.model');
+const Order = require('../Models/order.model');
 
 // post/add data menu (provider only)
 router.post('/create-menu', async (req, res) => {
@@ -93,7 +94,7 @@ router.get('/', async (req, res) => {
 });
 
 
-// GET: Orders for provider (provider dashboard)
+// GET: Orders for orders-provider (provider dashboard)
 router.get('/provider', async (req, res) => {
   try {
     const { providerId } = req.query;
@@ -117,7 +118,21 @@ router.get('/provider', async (req, res) => {
     }
 
     // fetch orders for this provider
-    const orders = await Order.find({ providerId })
+    // 🔹 get start & end of today
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // fetch ONLY today's orders for this provider
+    const orders = await Order.find({
+      providerId,
+      createdAt: {
+        $gte: startOfDay,
+        $lte: endOfDay
+      }
+    })
       .populate('userId', 'name mobile')   // student details
       .populate('menuId', 'date')          // menu date
       .sort({ createdAt: -1 });
