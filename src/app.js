@@ -4,6 +4,7 @@ const cors = require('cors');
 const session = require('express-session');
 const authRoutes = require('./routes/auth.route');
 const providerRoutes = require('./routes/provider.route');
+const orderRoutes = require('./routes/order.route');
 const connectDB = require('./db/db');
 
 // Connect to database
@@ -72,6 +73,7 @@ app.use(session({
 // Routes
 app.use("/auth", authRoutes);
 app.use("/provider", providerRoutes);
+app.use("/order", orderRoutes);
 
 // 404 handler
 app.use((req, res) => {
