@@ -97,7 +97,7 @@ router.post('/', async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
-    const { userId } = req.query;
+    const { userId, startDate, endDate } = req.query;
 
     // validation
     if (!userId) {
@@ -106,8 +106,36 @@ router.get('/', async (req, res) => {
       });
     }
 
+    // Build query
+    let query = { userId };
+
+    // If date range is provided, filter by orderDate
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      query.orderDate = {
+        $gte: start,
+        $lte: end
+      };
+    } else if (startDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      
+      const end = new Date(startDate);
+      end.setHours(23, 59, 59, 999);
+
+      query.orderDate = {
+        $gte: start,
+        $lte: end
+      };
+    }
+
     // fetch orders for this student
-    const orders = await Order.find({ userId })
+    const orders = await Order.find(query)
       .populate('providerId', 'name mobile')
       .populate('menuId', 'date')
       .sort({ createdAt: -1 });
