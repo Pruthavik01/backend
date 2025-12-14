@@ -4,6 +4,7 @@ const router = express.Router();
 const Order = require('../Models/order.model');
 const User = require('../Models/user.model');
 const Menu = require('../Models/menu.model');
+const { getOrdersSummary, getProviderOrdersSummary } = require('../controllers/orders');
 
 // POST: Place order (Student)
 router.post('/', async (req, res) => {
@@ -145,6 +146,13 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET: Orders summary (all orders)
+// Usage: GET /api/orders/summary?date=2025-12-14
+router.get('/summary/all', getOrdersSummary);
+
+// GET: Orders summary for a specific provider
+// Usage: GET /api/orders/summary/provider?providerId=xxx&date=2025-12-14
+router.get('/summary/provider', getProviderOrdersSummary);
 
 router.get("/count", async (req, res) => {})
 

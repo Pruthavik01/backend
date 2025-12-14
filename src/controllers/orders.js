@@ -1,0 +1,201 @@
+const Order = require('../Models/order.model');
+
+// Get orders summary for a specific date
+exports.getOrdersSummary = async (req, res) => {
+  try {
+    const { date } = req.query;
+
+    let query = {};
+
+    // If date is provided, filter orders by that date
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      query.orderDate = {
+        $gte: startOfDay,
+        $lte: endOfDay
+      };
+    } else {
+      // Default to today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      query.orderDate = {
+        $gte: today,
+        $lt: tomorrow
+      };
+    }
+
+    // Get all orders for the date
+    const orders = await Order.find(query).populate('userId').populate('menuId');
+
+    // Calculate summary statistics
+    let totalOrders = 0;
+    let fullTiffinCount = 0;
+    let halfTiffinCount = 0;
+    let riceOnlyCount = 0;
+    let totalRevenue = 0;
+
+    // Only count orders if menu exists
+    orders.forEach(order => {
+      if (!order.menuId) {
+        // Skip orders where menu is deleted
+        return;
+      }
+      
+      totalOrders += 1;
+      order.items.forEach(item => {
+        if (item.mealType === 'full') {
+          fullTiffinCount += item.quantity;
+        } else if (item.mealType === 'half') {
+          halfTiffinCount += item.quantity;
+        } else if (item.mealType === 'riceOnly') {
+          riceOnlyCount += item.quantity;
+        }
+      });
+      totalRevenue += order.grandTotal;
+    });
+
+    const summary = {
+      date: date || new Date().toISOString().split('T')[0],
+      totalOrders,
+      fullTiffin: fullTiffinCount,
+      halfTiffin: halfTiffinCount,
+      riceOnly: riceOnlyCount,
+      totalRevenue,
+      orders: orders.map(order => ({
+        orderId: order._id,
+        userId: order.userId._id,
+        userName: order.userId.name,
+        items: order.items,
+        grandTotal: order.grandTotal,
+        status: order.status,
+        orderDate: order.orderDate
+      }))
+    };
+
+    res.status(200).json({
+      success: true,
+      data: summary
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+// Get orders summary for a specific provider
+exports.getProviderOrdersSummary = async (req, res) => {
+  try {
+    const { providerId, date } = req.query;
+
+    if (!providerId) {
+      return res.status(400).json({
+        success: false,
+        message: 'providerId is required'
+      });
+    }
+
+    let query = { providerId };
+
+    // If date is provided, filter orders by that date
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      query.orderDate = {
+        $gte: startOfDay,
+        $lte: endOfDay
+      };
+    } else {
+      // Default to today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      query.orderDate = {
+        $gte: today,
+        $lt: tomorrow
+      };
+    }
+
+    // Get all orders for the provider
+    const orders = await Order.find(query).populate('userId').populate('menuId');
+
+    // Calculate summary statistics
+    let totalOrders = 0;
+    let fullTiffinCount = 0;
+    let halfTiffinCount = 0;
+    let riceOnlyCount = 0;
+    let totalRevenue = 0;
+
+    // Only count orders if menu exists
+    orders.forEach(order => {
+      if (!order.menuId) {
+        // Skip orders where menu is deleted
+        return;
+      }
+      
+      totalOrders += 1;
+      order.items.forEach(item => {
+        if (item.mealType === 'full') {
+          fullTiffinCount += item.quantity;
+        } else if (item.mealType === 'half') {
+          halfTiffinCount += item.quantity;
+        } else if (item.mealType === 'riceOnly') {
+          riceOnlyCount += item.quantity;
+        }
+      });
+      totalRevenue += order.grandTotal;
+    });
+
+    const summary = {
+      providerId,
+      date: date || new Date().toISOString().split('T')[0],
+      totalOrders,
+      fullTiffin: fullTiffinCount,
+      halfTiffin: halfTiffinCount,
+      riceOnly: riceOnlyCount,
+      totalRevenue,
+      orders: orders.map(order => ({
+        orderId: order._id,
+        userId: order.userId._id,
+        userName: order.userId.name,
+        items: order.items,
+        grandTotal: order.grandTotal,
+        status: order.status,
+        orderDate: order.orderDate
+      }))
+    };
+
+    res.status(200).json({
+      success: true,
+      data: summary
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
