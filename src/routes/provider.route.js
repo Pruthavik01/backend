@@ -95,9 +95,10 @@ router.get('/', async (req, res) => {
 
 
 // GET: Orders for orders-provider (provider dashboard)
-router.get('/provider', async (req, res) => {
+router.post('/provider', async (req, res) => {
   try {
     const { providerId } = req.query;
+    const {startDate, endDate} = req.body;
 
     if (!providerId) {
       return res.status(400).json({
@@ -119,10 +120,10 @@ router.get('/provider', async (req, res) => {
 
     // fetch orders for this provider
     // 🔹 get start & end of today
-    const startOfDay = new Date();
+    const startOfDay = startDate ? new Date(startDate) : new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
-    const endOfDay = new Date();
+    const endOfDay = endDate ? new Date(endDate) : new Date();
     endOfDay.setHours(23, 59, 59, 999);
 
     // fetch ONLY today's orders for this provider
@@ -149,7 +150,6 @@ router.get('/provider', async (req, res) => {
     });
   }
 });
-
 
 
 // Update menu (provider only)
