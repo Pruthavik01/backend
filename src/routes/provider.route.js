@@ -95,10 +95,12 @@ router.get('/', async (req, res) => {
 
 
 // GET: Orders for orders-provider (provider dashboard)
+// Accepts providerId in query or body. Filters orders by orderDate between startDate and endDate (inclusive).
 router.post('/provider', async (req, res) => {
   try {
-    const { providerId } = req.query;
-    const {startDate, endDate} = req.body;
+    // allow providerId in query or body for flexibility
+    const providerId = req.query.providerId || req.body.providerId;
+    const { startDate, endDate } = req.body;
 
     if (!providerId) {
       return res.status(400).json({
@@ -118,25 +120,25 @@ router.post('/provider', async (req, res) => {
       });
     }
 
-    // fetch orders for this provider
-    // 🔹 get start & end of today
-    const startOfDay = startDate ? new Date(startDate) : new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    // build date range (use orderDate field which represents the actual order day)
+    const start = startDate ? new Date(startDate) : new Date();
+    start.setHours(0, 0, 0, 0);
 
-    const endOfDay = endDate ? new Date(endDate) : new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+    const end = endDate ? new Date(endDate) : new Date();
+    end.setHours(23, 59, 59, 999);
 
-    // fetch ONLY today's orders for this provider
+    // Query orders for this provider using orderDate (not createdAt)
+    // This ensures filtering by the intended order-day even if createdAt/timezones differ.
     const orders = await Order.find({
       providerId,
-      createdAt: {
-        $gte: startOfDay,
-        $lte: endOfDay
+      orderDate: {
+        $gte: start,
+        $lte: end
       }
     })
       .populate('userId', 'name mobile')   // student details
       .populate('menuId', 'date')          // menu date
-      .sort({ createdAt: -1 });
+      .sort({ orderDate: -1 });
 
     res.status(200).json({
       count: orders.length,
