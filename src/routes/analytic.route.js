@@ -173,27 +173,67 @@ router.get('/growth-rate', async (req, res) => {
 ========================= */
 router.get('/best-sellers', async (req, res) => {
   try {
-    const { providerId, limit = 5 } = req.query;
-    if (!providerId) return res.status(400).json({ message: 'providerId required' });
+    const { providerId } = req.query;
+    if (!providerId) {
+      return res.status(400).json({ message: 'providerId required' });
+    }
 
-    const data = await Order.aggregate([
+    /* =========================
+       1️⃣ Most ordered tiffin type
+    ========================= */
+    const topMealTypeAgg = await Order.aggregate([
       { $match: baseMatch(providerId) },
       { $unwind: '$items' },
       {
         $group: {
-          _id: { mealType: '$items.mealType', sabji: '$items.sabji' },
+          _id: '$items.mealType',
           quantity: { $sum: '$items.quantity' }
         }
       },
       { $sort: { quantity: -1 } },
-      { $limit: Number(limit) }
+      { $limit: 1 }
     ]);
 
-    res.json({ success: true, data });
+    /* =========================
+       2️⃣ Top 3 sabjis ordered
+    ========================= */
+    const topSabjiAgg = await Order.aggregate([
+      { $match: baseMatch(providerId) },
+      { $unwind: '$items' },
+      {
+        $match: {
+          'items.sabji': { $exists: true, $ne: null }
+        }
+      },
+      {
+        $group: {
+          _id: '$items.sabji',
+          quantity: { $sum: '$items.quantity' }
+        }
+      },
+      { $sort: { quantity: -1 } },
+      { $limit: 3 }
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        topMealType: topMealTypeAgg.length
+          ? { mealType: topMealTypeAgg[0]._id, quantity: topMealTypeAgg[0].quantity }
+          : null,
+        topSabjis: topSabjiAgg.map(s => ({
+          sabji: s._id,
+          quantity: s.quantity
+        }))
+      }
+    });
+
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: err.message });
   }
 });
+
 
 /* =========================
    5️⃣ Daily Revenue Trend
