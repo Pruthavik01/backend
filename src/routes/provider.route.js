@@ -64,7 +64,7 @@ router.post('/create-menu', async (req, res) => {
 // get data menu
 router.get('/', async (req, res) => {
   try {
-    const menus = await Menu.find()
+    const menus = await Menu.find({ isActive: true })
       .populate('providerId', 'name mobile')
       .sort({ date: -1 }); // latest first
 
