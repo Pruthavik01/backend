@@ -79,7 +79,7 @@ app.use(session({
 app.use("/auth", authRoutes);
 app.use("/provider", providerRoutes);
 app.use("/order", orderRoutes);
-app.use('/analytic', analyticsRoutes);
+app.use('/analytic', analyticRoutes);
 
 // 404 handler
 app.use((req, res) => {
