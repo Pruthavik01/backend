@@ -6,6 +6,7 @@ const authRoutes = require('./routes/auth.route');
 const providerRoutes = require('./routes/provider.route');
 const orderRoutes = require('./routes/order.route');
 const analyticRoutes = require('./routes/analytic.route');
+const profileRoutes = require('./routes/profile.route');
 const connectDB = require('./db/db');
 
 // Connect to database
@@ -80,6 +81,7 @@ app.use("/auth", authRoutes);
 app.use("/provider", providerRoutes);
 app.use("/order", orderRoutes);
 app.use('/analytic', analyticRoutes);
+app.use('/profile', profileRoutes); 
 
 // 404 handler
 app.use((req, res) => {
